@@ -1,54 +1,29 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
+import { connect } from 'react-redux';
 
 import EventItem from './EventItem';
+import { fetchMessages } from '../actions/messageActions';
 
 class RecentEvents extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      events: [],
-      error: null
-    };
-  }
-
-  handleAddItem(item) {
-    let events = this.state.events;
-    events.splice(0, 0, item);
-    
-
-    this.setState({
-     events: events.slice(0, 4)
-    });
-  }
-
-  renderEvents(){
-    return this.state.events.map(e => {
-        return <EventItem name={e[0]} time={e[1]} location={e[2]['name']} key={e[1]}/>
-    })
-  }
-
-  componentDidMount() {
-    this.ws = new WebSocket('ws://thawing-ravine-52538.herokuapp.com/ws/notifs/');
-    this.ws.onmessage = e => this.handleAddItem(Object.values(JSON.parse(e.data)));
-    this.ws.onerror = e => this.setState({ error: 'WebSocket error' });
-    this.ws.onclose = e => !e.wasClean && this.setState({ error: `WebSocket error: ${e.code} ${e.reason}` });
-  }
-
-  componentWillUnmount() {
-    this.ws.close()
+  componentWillMount() {
+    this.props.fetchMessages();
   }
 
   render() {
+    const eventItems = this.props.messages.map(message => {
+      console.log(message);
+      return <EventItem name={message[0]} time={message[1]} location={message[2]['name']} key={message[1]}/>
+    })
+
     return (
       <div className="column is-6">
-        <h1> { this.props.events }</h1>
+        <h1> { this.props.messages }</h1>
         <div className="card events-card">
           <header className="card-header">
             <p className="card-header-title">Recent Events</p>
             <Link to="#" className="card-header-icon" aria-label="more options">
-              <span className="icon">
+              <span className="i  con">
                 <i className="fa fa-angle-down" aria-hidden="true"></i>
               </span>
             </ Link>
@@ -57,7 +32,7 @@ class RecentEvents extends React.Component {
             <div className="content">
               <table className="table is-fullwidth is-striped">
                 <tbody>
-                  { this.renderEvents() }
+                  { console.log(this.props.messages) }
                 </tbody>
               </table>
             </div>
@@ -72,4 +47,9 @@ class RecentEvents extends React.Component {
 }
   
 
-export default RecentEvents;
+const mapStateToProps = state => {
+  // console.log(state.messages.items);
+  return {messages: state.messages.items}
+}
+
+export default connect(mapStateToProps, { fetchMessages })(RecentEvents);
